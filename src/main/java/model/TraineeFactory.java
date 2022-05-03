@@ -16,7 +16,7 @@ public class TraineeFactory {
         //generate a random number between 50 and 100 for the amount of trainees to be added
         int amountOfTrainees = random.nextInt(50,100);
 
-        ArrayList<Trainee> newTrainees = new ArrayList<Trainee>();
+        ArrayList<Trainee> newTrainees = new ArrayList<>();
 
         //create and add trainees to the list of new trainees
         for (int i = 0; i < amountOfTrainees; i++) {
