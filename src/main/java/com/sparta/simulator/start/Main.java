@@ -1,11 +1,9 @@
 package com.sparta.simulator.start;
 
-import com.sparta.simulator.start.display.Display;
-
-import java.util.Scanner;
+import com.sparta.simulator.controller.SimulatorManager;
 
 public class Main {
     public static void main(String[] args) {
-        Display.mainDisplay();
+        SimulatorManager.initialise();
     }
 }

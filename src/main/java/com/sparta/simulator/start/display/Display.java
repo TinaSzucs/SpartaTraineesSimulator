@@ -2,9 +2,9 @@ package com.sparta.simulator.start.display;
 
 import java.util.Scanner;
 
-public class Display {
+public abstract class Display {
 
-    public static void mainDisplay() {
+    public static int mainDisplay() {
         Scanner input = new Scanner(System.in);
         int noFullCentres, noOpenCentres, noInTraining, noInWaitingList;
         noFullCentres = noOpenCentres = noInTraining = noInWaitingList = 0;
@@ -19,5 +19,7 @@ public class Display {
         System.out.println("Number of open training centres: " + noOpenCentres);
         System.out.println("Number of trainees in training: " + noInTraining);
         System.out.println("Number of trainees in waiting list: " + noInWaitingList);
+
+        return length;
     }
 }
