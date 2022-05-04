@@ -6,17 +6,20 @@ public class TechCentre extends TrainingCentre {
 
     private final int MIN_CAPACITY = 25;
     private final int MAX_CAPACITY = 200;
+
+    public Course getCourse() { return course; }
+
+    private Course course;
     private int currentCapacity = 0;
     private int onTheTraining = 0;
-
-    //private final ArrayList<TrainingCentre> centres;
 
 
     public TechCentre() {
         this.currentCapacity = 0;
         startNewTraining();
         this.onTheTraining = 0;
-        //this.centres = new ArrayList<>();
+        Random random = new Random();
+        this.course = Course.values()[random.nextInt(0, Course.values().length)];
     }
 
     @Override
@@ -45,13 +48,7 @@ public class TechCentre extends TrainingCentre {
         this.currentCapacity += places;
     }
 
-//    public Collection<Trainee> traineesByCourseType(String courseType){
-//        ArrayList<Trainee> trainees = new ArrayList<>();
-//        for (TrainingCentre trainingCentre : centres) {
-//            trainees.addAll(trainingCentre.traineesByCourseType(courseType));
-//        }
-//        return trainees;
-//    }
+
 
 
 }

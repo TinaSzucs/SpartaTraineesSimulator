@@ -50,19 +50,4 @@ public class Bootcamp extends TrainingCentre {
         this.currentCapacity += places;
     }
 
-    public boolean closedBootcamp() {
-        boolean bootcampOpen = true;
-        while(bootcampOpen) {
-            if (this.currentCapacity >= 25) {
-                lowCapacityTime = 0;
-            } else {
-                lowCapacityTime++;
-                if (lowCapacityTime >= 3) {
-                    bootcampOpen = false;
-                }
-            }
-        }
-        return false;
-    }
-
 }
