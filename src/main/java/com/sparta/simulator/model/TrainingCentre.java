@@ -1,17 +1,18 @@
 package com.sparta.simulator.model;
 
+import model.Trainee;
+
+import java.util.ArrayList;
 import java.util.Random;
 
 public class TrainingCentre {
     private final int CAPACITY = 100;
-    private int currentCapacity = 0;
-    private int onTheTraining = 0;
+    private int currentCapacity;
+    private ArrayList<Trainee> onTheTraining = new ArrayList<>();
 
 
     public TrainingCentre() {
         this.currentCapacity = 0;
-        startNewTraining();
-        this.onTheTraining = 0;
     }
 
     public int getCAPACITY() {
@@ -26,24 +27,44 @@ public class TrainingCentre {
         this.currentCapacity = currentCapacity;
     }
 
-    public int getOnTheTraining() {
+    public ArrayList<Trainee> getOnTheTraining() {
         return onTheTraining;
     }
 
-    public void setOnTheTraining(int onTheTraining) {
+    public void setOnTheTraining(ArrayList<Trainee> onTheTraining) {
         this.onTheTraining = onTheTraining;
     }
 
-    public int enrolledTraining(int num) {
-        int leftTrainees = 0;
-        int freeSpaces = this.currentCapacity - this.onTheTraining;
-        if(freeSpaces >= num) {
-            this.onTheTraining += num;
+    public int getFreeSpace() {
+        return this.currentCapacity - this.onTheTraining.size();
+    }
+
+    public ArrayList<Trainee> enrollTrainees(ArrayList<Trainee> trainees) {
+        ArrayList<Trainee> leftoverTrainees = new ArrayList<>();
+        int freeSpaces = this.getFreeSpace();
+
+        if(freeSpaces >= trainees.size()) {
+            this.onTheTraining.addAll(trainees);
         } else {
-            leftTrainees = num - freeSpaces;
-            this.onTheTraining += freeSpaces;
+            for (int i=0 ; i<freeSpaces ; i++) {
+                this.onTheTraining.add(trainees.get(0));
+                trainees.remove(0);
+            }
+
+            leftoverTrainees.addAll(trainees);
         }
-        return leftTrainees;
+        return leftoverTrainees;
+    }
+
+    public boolean enrollTrainee(Trainee trainee) {
+        boolean successful = false;
+
+        if (this.getFreeSpace() > 0) {
+            this.onTheTraining.add(trainee);
+            successful = true;
+        }
+
+        return successful;
     }
 
     public void startNewTraining() {
