@@ -2,8 +2,8 @@ package com.sparta.simulator.controller;
 
 import com.sparta.simulator.model.TrainingCentre;
 import com.sparta.simulator.start.display.Display;
-import model.Trainee;
-import model.TraineeFactory;
+import com.sparta.simulator.model.Trainee;
+import com.sparta.simulator.model.TraineeFactory;
 
 import java.util.ArrayList;
 
