@@ -76,4 +76,5 @@ public class TrainingCentre {
         }
         this.currentCapacity += places;
     }
+    // new comment
 }
