@@ -1,7 +1,5 @@
 package com.sparta.simulator.model;
 
-import com.sparta.simulator.model.Trainee;
-
 import java.util.ArrayList;
 import java.util.Random;
 
