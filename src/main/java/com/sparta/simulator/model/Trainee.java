@@ -11,4 +11,8 @@ public class Trainee {
         Random random = new Random();
         this.courseType = Course.values()[random.nextInt(0, Course.values().length)];
     }
+
+    public Course getCourseType() {
+        return courseType;
+    }
 }
