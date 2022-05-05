@@ -53,7 +53,7 @@ public class TraineeFactory {
             }
 
             // remove the fully trained employees from the centres
-            //trainingCentre.removeTrainees(removeFromCentre);
+            trainingCentre.removeTrainees(removeFromCentre);
             removeFromCentre.clear();
         }
     }
