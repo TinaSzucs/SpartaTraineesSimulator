@@ -65,8 +65,11 @@ public class TrainingCentre {
         this.currentCapacity += places;
     }
 
-
     public int getFreeSpace() {
         return this.getCurrentCapacity() - this.getOnTheTraining().size();
+    }
+
+    public boolean remainOpen() {
+        return (onTheTraining.size() >= 25);
     }
 }

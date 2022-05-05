@@ -51,7 +51,9 @@ public class Bootcamp extends TrainingCentre {
     }
 
     public void incrementLowAttendanceTime() {
-        this.lowAttendanceTime++;
+        if (this.onTheTraining.size() < 25) {
+            this.lowAttendanceTime++;
+        }
     }
 
 
@@ -91,7 +93,6 @@ public class Bootcamp extends TrainingCentre {
         return successful;
     }
 
-
     @Override
     public void startNewTraining(){
         Random rand = new Random();
@@ -103,19 +104,24 @@ public class Bootcamp extends TrainingCentre {
             places = rand.nextInt(0, max+1);
         }
         this.currentCapacity += places;
-    }
 
+        incrementLowAttendanceTime();
+    }
 
     @Override
     public int getFreeSpace() {
         return this.getCurrentCapacity() - this.getOnTheTraining().size();
     }
 
-
     private void resetLowAttendanceTime() {
         if (this.onTheTraining.size() >= 25) {
             this.lowAttendanceTime = 0;
         }
+    }
+
+    @Override
+    public boolean remainOpen() {
+        return (onTheTraining.size() >= 25 || lowAttendanceTime < 3);
     }
 
 }

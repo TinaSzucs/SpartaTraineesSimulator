@@ -40,6 +40,7 @@ public class TrainingHub extends TrainingCentre {
         this.onTheTraining = onTheTraining;
     }
 
+
     @Override
     public ArrayList<Trainee> enrollTrainees(ArrayList<Trainee> trainees) {
         ArrayList<Trainee> leftoverTrainees = new ArrayList<>();
@@ -58,7 +59,6 @@ public class TrainingHub extends TrainingCentre {
         return leftoverTrainees;
     }
 
-
     @Override
     public boolean enrollTrainee(Trainee trainee) {
         boolean successful = false;
@@ -70,7 +70,6 @@ public class TrainingHub extends TrainingCentre {
 
         return successful;
     }
-
 
     @Override
     public void startNewTraining(){
@@ -85,10 +84,14 @@ public class TrainingHub extends TrainingCentre {
         this.currentCapacity += places;
     }
 
-
     @Override
     public int getFreeSpace() {
         return this.getCurrentCapacity() - this.getOnTheTraining().size();
+    }
+
+    @Override
+    public boolean remainOpen() {
+        return (onTheTraining.size() >= 25);
     }
 }
 

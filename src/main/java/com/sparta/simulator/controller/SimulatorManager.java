@@ -8,7 +8,8 @@ import java.util.ArrayList;
 public abstract class SimulatorManager {
     public static void initialise() {
         // storing list of TrainingCentres, Trainees currently on training, and Trainees on waiting list
-        ArrayList<TrainingCentre> centreList = new ArrayList<>();
+        ArrayList<TrainingCentre> openCentres = new ArrayList<>();
+        ArrayList<TrainingCentre> closedCentres = new ArrayList<>();
         ArrayList<Trainee> waitingTrainees = new ArrayList<>();
 
         // we get the input from user to how long to run the simulation
@@ -18,36 +19,32 @@ public abstract class SimulatorManager {
         int summaryChoice = Display.scanChoiceOfSummary();
 
 
-        int centresToGenerate = 1;
-
-
         // iterate through each tick [=month]
         for (int i=0 ; i <= runtime ; i++) {
             System.out.printf("\n%d. month:\n", i);
 
             // Every 2 months, Sparta Global opens training centres; they open instantly and can take trainees every month.
             if (i%2 == 0) {
-                openTrainingCentre(centreList);
+                openTrainingCentre(openCentres);
             }
 
-
             // A centre can train a max of 100 trainees and takes a random number of trainees every month (0 - 50 trainees up to their capacity).
-            monthlyTraineeIntake(centreList);
-
+            monthlyTraineeIntake(openCentres);
 
             // If all centres are full, the trainees go onto a waiting list; this list must be served first before new trainees are taken.
-            allocateFromWaitingList(waitingTrainees, centreList);
-
+            allocateFromWaitingList(waitingTrainees, openCentres);
 
             // Every month, a random number of trainees are generated, wanting to be trained (50 - 100).
-            monthlyNewTrainees(waitingTrainees, centreList);
+            monthlyNewTrainees(waitingTrainees, openCentres);
 
+
+            // mukodik eddig
 
             // If a centre has fewer than 25 trainees, it will close.
             // The trainees will be randomly moved to another suitable centre.
             // Bootcamp: can remain open for 3 months if there are fewer than 25 trainees in attendance. If a Bootcamp has 3 consecutive months of low attendance, it will close
+            closeLowAttendanceCentres(openCentres, closedCentres, waitingTrainees);
 
-            // mukodik eddig
 
             // call function from Display to print out that month's infos:
 //                number of open centres
@@ -61,11 +58,11 @@ public abstract class SimulatorManager {
     }
 
 
-    private static void openTrainingCentre(ArrayList<TrainingCentre> centres) {
+    private static void openTrainingCentre(ArrayList<TrainingCentre> centreList) {
         int hubCount =  0;
         int bootcampCount = 0;
 
-        for (TrainingCentre centre: centres) {
+        for (TrainingCentre centre: centreList) {
             if (centre instanceof TrainingHub) {
                 hubCount++;
             } else if (centre instanceof Bootcamp) {
@@ -79,16 +76,15 @@ public abstract class SimulatorManager {
         centreType = centreType.substring(centreType.lastIndexOf('.')+1);
         System.out.printf("\t%S have been created.\n", centreType);
 
-        centres.add(newCentre);
+        centreList.add(newCentre);
     }
 
 
-    private static void monthlyTraineeIntake(ArrayList<TrainingCentre> centres){
-        System.out.printf("\tcurrently we have %d open centres:\n", centres.size());
-        int totalFreeSpace = 0;
+    private static void monthlyTraineeIntake(ArrayList<TrainingCentre> centreList){
+        System.out.printf("\tcurrently we have %d open centres:\n", centreList.size());
 
         int index = 1;
-        for(TrainingCentre centre: centres) {
+        for(TrainingCentre centre: centreList) {
             int prevCapacity = centre.getCurrentCapacity();
             centre.startNewTraining();
             int newCapacity = centre.getCurrentCapacity();
@@ -99,7 +95,6 @@ public abstract class SimulatorManager {
             centreType = centreType.substring(centreType.lastIndexOf('.')+1);
 
             System.out.printf("\t\t%d. %S can take %d additional trainees this month. Now the centre's total capacity is %d, from which is %d free.\n", index, centreType, newTrainingSize, newCapacity, freeSpace);
-            totalFreeSpace += freeSpace;
             index++;
         }
     }
@@ -124,6 +119,7 @@ public abstract class SimulatorManager {
                 if (centre.getFreeSpace() > 0) {
                     ArrayList<Trainee> leftoverTrainees = new ArrayList<>();
                     leftoverTrainees.addAll(centre.enrollTrainees(traineesToAllocate));
+
                     traineesToAllocate.clear();
                     traineesToAllocate.addAll(leftoverTrainees);
                 }
@@ -133,6 +129,7 @@ public abstract class SimulatorManager {
         // if there are more spaces, than trainees to allocate
         // we iterate through the trainees, and insert them one by one to the next centre which still has space
         else {
+            ArrayList<Trainee> couldNotAllocate = new ArrayList<>();
             int centreCount = centreList.size();
             int position = 0;
             boolean addedTrainee = false;
@@ -148,8 +145,13 @@ public abstract class SimulatorManager {
                     attempts++;
                 } while (addedTrainee && attempts < centreCount);
 
+                if ( !addedTrainee ) {
+                    couldNotAllocate.add(traineesToAllocate.get(0));
+                }
                 traineesToAllocate.remove(0);
             }
+
+            traineesToAllocate = couldNotAllocate;
         }
 
         //  if we have trainees which we couldn't allocate due to space limit, it will remain in the original arraylist
@@ -191,6 +193,55 @@ public abstract class SimulatorManager {
         else {
             waitingList.addAll(allocateTrainees(newTrainees, centreList));
             System.out.printf("\tafter allocating the new trainees among the free spaces, we have %d trainees on the waiting list.\n", waitingList.size());
+        }
+    }
+
+
+    private static void closeLowAttendanceCentres(ArrayList<TrainingCentre> open, ArrayList<TrainingCentre> closed, ArrayList<Trainee> waitingList){
+        System.out.println("\t. . . checking if a training centre needs to close . . .");
+        // If a centre has fewer than 25 trainees, it will close.
+        // Bootcamp: can remain open for 3 months if there are fewer than 25 trainees in attendance. If a Bootcamp has 3 consecutive months of low attendance, it will close.
+        ArrayList<TrainingCentre> newOpenList = new ArrayList<>();
+        ArrayList<Trainee> traineesToRelocate = new ArrayList<>();
+        int index = 1;
+        boolean closedAnyCentre = false;
+
+        for (TrainingCentre centre: open) {
+            if (centre.remainOpen()) {
+                newOpenList.add(centre);
+            } else {
+                closedAnyCentre = true;
+                traineesToRelocate.addAll(centre.getOnTheTraining());
+                closed.add(centre);
+
+                String centreType = String.valueOf(centre.getClass());
+                centreType = centreType.substring(centreType.lastIndexOf('.')+1);
+
+                System.out.printf("\t\t%d. %S training centre shuts down. It had only %d trainees.\n", index, centreType, centre.getOnTheTraining().size());
+            }
+
+            index++;
+        }
+
+        if (closedAnyCentre) {
+            open = newOpenList;
+            moveTraineesFromClosedCentre(traineesToRelocate, open, waitingList);
+        } else {
+            System.out.println("\tno centres was shut down.");
+        }
+
+    }
+
+
+    private static void moveTraineesFromClosedCentre(ArrayList<Trainee> traineesToMove, ArrayList<TrainingCentre> centreList, ArrayList<Trainee> waitingList){
+        System.out.println("\t. . . trying to relocate trainees from the closed centres . . .");
+        int originalSize = traineesToMove.size();
+        allocateTrainees(traineesToMove, centreList);
+        int newSize = traineesToMove.size();
+        System.out.printf("\t\t%d trainees were on training, from which we could relocate %d. The remaining %d added to the beginning of waiting list.\n", originalSize, originalSize-newSize, newSize);
+
+        for (int i=traineesToMove.size()-1 ; i >= 0 ; i--) {
+            waitingList.add(0, traineesToMove.get(i));
         }
     }
 

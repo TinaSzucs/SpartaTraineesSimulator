@@ -46,6 +46,7 @@ public class TechCentre extends TrainingCentre {
         this.onTheTraining = onTheTraining;
     }
 
+
     // to check the Trainee course matches the Hub type before trying to enroll to the Trainee
     @Override
     public ArrayList<Trainee> enrollTrainees(ArrayList<Trainee> trainees) {
@@ -65,7 +66,6 @@ public class TechCentre extends TrainingCentre {
         return leftoverTrainees;
     }
 
-
     @Override
     public boolean enrollTrainee(Trainee trainee) {
         boolean successful = false;
@@ -78,7 +78,6 @@ public class TechCentre extends TrainingCentre {
         return successful;
     }
 
-
     @Override
     public void startNewTraining(){
         Random rand = new Random();
@@ -89,9 +88,9 @@ public class TechCentre extends TrainingCentre {
         } else {
             places = rand.nextInt(0, max+1);
         }
+
         this.currentCapacity += places;
     }
-
 
     public boolean isCourseMatch(Trainee trainee) {
         return (trainee.getCourseType() == this.course);
@@ -100,6 +99,11 @@ public class TechCentre extends TrainingCentre {
     @Override
     public int getFreeSpace() {
         return this.getCurrentCapacity() - this.getOnTheTraining().size();
+    }
+
+    @Override
+    public boolean remainOpen() {
+        return (this.onTheTraining.size() >= 25);
     }
 
 }
