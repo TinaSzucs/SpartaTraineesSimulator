@@ -7,14 +7,13 @@ public class TechCentre extends TrainingCentre {
     private final int MIN_CAPACITY = 25;
     private final int MAX_CAPACITY = 200;
     private int currentCapacity = 0;
-    private ArrayList<Trainee> onTheTraining = new ArrayList<>();
+    private ArrayList<Trainee> onTheTraining;
     private Course course;
 
 
     public TechCentre() {
         this.currentCapacity = 0;
         this.onTheTraining = new ArrayList<Trainee>();
-
         Random random = new Random();
         this.course = Course.values()[random.nextInt(0, Course.values().length)];
     }
