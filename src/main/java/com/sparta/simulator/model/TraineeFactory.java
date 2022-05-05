@@ -57,4 +57,8 @@ public class TraineeFactory {
             removeFromCentre.clear();
         }
     }
+
+    public ArrayList<Trainee> getBenchList()    {
+        return benchList;
+    }
 }
