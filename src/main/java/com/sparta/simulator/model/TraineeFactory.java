@@ -11,6 +11,7 @@ public class TraineeFactory {
 
     private static ArrayList<Trainee> allTrainees = new ArrayList<>();
     private static ArrayList<Trainee> waitingList = new ArrayList<>();
+    private static ArrayList<Trainee> benchList = new ArrayList<>();
 
     public static ArrayList<Trainee> generateTrainees() {
 
@@ -33,5 +34,27 @@ public class TraineeFactory {
 
         waitingList.addAll(newTrainees);
         totalTrainees += newTrainees.size();
+    }
+
+    public static void benchTrainees(ArrayList<TrainingCentre> trainingCentres) {
+        ArrayList<Trainee> removeFromCentre = new ArrayList<>();
+
+        for (TrainingCentre trainingCentre : trainingCentres)   {
+
+            for (Trainee trainee : trainingCentre.getOnTheTraining())   {
+                //add another month trained for the trainee
+                trainee.addMonthTraining();
+
+                //once trained for 3 months the trainee is added to bench list
+                if (trainee.getMonthsTrained() == 3)    {
+                    benchList.add(trainee);
+                    removeFromCentre.add(trainee);
+                }
+            }
+
+            // remove the fully trained employees from the centres
+            trainingCentre.removeTrainees(removeFromCentre);
+            removeFromCentre.clear();
+        }
     }
 }

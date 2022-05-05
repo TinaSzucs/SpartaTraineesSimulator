@@ -72,4 +72,8 @@ public class TrainingCentre {
     public boolean remainOpen() {
         return (onTheTraining.size() >= 25);
     }
+
+    public void removeTrainees(ArrayList<Trainee> traineesToRemove) {
+        this.onTheTraining.removeAll(traineesToRemove);
+    }
 }
