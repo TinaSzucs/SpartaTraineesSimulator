@@ -1,5 +1,6 @@
 package com.sparta.simulator.controller;
 
+import com.sparta.simulator.logging.LogDriver;
 import com.sparta.simulator.model.*;
 import com.sparta.simulator.start.display.Display;
 
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 
 public abstract class SimulatorManager {
     public static void initialise() {
+        LogDriver.traceLog("SimulatorManager have been invoked.");
         // storing list of TrainingCentres, Trainees currently on training, and Trainees on waiting list
         ArrayList<TrainingCentre> openCentres = new ArrayList<>();
         ArrayList<TrainingCentre> closedCentres = new ArrayList<>();
@@ -27,11 +29,13 @@ public abstract class SimulatorManager {
 
 
         // iterate through each tick [=month]
+        LogDriver.debugLog(String.format("SimulatorManager starts to iterate through the months up to the provided simulation length (%d).", runtime));
         for (int tick = 1; tick <= runtime; tick++) {
-            System.out.printf("\n%d. month:\n", tick);
+            LogDriver.debugLog(String.format("Current month: %d", tick));
 
             // Every 2 months, Sparta Global opens training centres; they open instantly and can take trainees every month.
             if (tick % 2 == 1) {
+                LogDriver.traceLog(String.format("Within the every second month (%d %c 2 == %d)", tick, '%', tick%2));
                 openTrainingCentre(openCentres);
             }
 
@@ -93,37 +97,28 @@ public abstract class SimulatorManager {
             }
         }
 
+        LogDriver.traceLog(String.format("Currently we have %d Training Hub and %d Bootcamp.", hubCount, bootcampCount));
         TrainingCentre newCentre = TrainingCentreFactory.generateTrainingCentre(bootcampCount, hubCount);
-
-        String centreType = String.valueOf(newCentre.getClass());
-        centreType = centreType.substring(centreType.lastIndexOf('.')+1);
-        System.out.printf("\t%S have been created.\n", centreType);
 
         centreList.add(newCentre);
     }
 
 
     private static void monthlyTraineeIntake(ArrayList<TrainingCentre> centreList){
-        System.out.printf("\tcurrently we have %d open centres:\n", centreList.size());
+        LogDriver.debugLog("Increase the currently open centres monthly Trainee intake.");
+        LogDriver.traceLog(String.format("Currently we have %d open centres:", centreList.size()));
+        StringBuilder sb = new StringBuilder();
 
         int index = 1;
         for(TrainingCentre centre: centreList) {
-            int prevCapacity = centre.getCurrentCapacity();
-            centre.startNewTraining();
-            int newCapacity = centre.getCurrentCapacity();
-            int newTrainingSize = newCapacity - prevCapacity;
-            int freeSpace = centre.getFreeSpace();
+            int newTrainingSize = centre.startNewTraining();
 
-            String centreType = String.valueOf(centre.getClass());
-            centreType = centreType.substring(centreType.lastIndexOf('.')+1);
+            sb.append(String.format("\t%d. %S can take %d additional trainees this month. Now the centre's total capacity is %d, from which is %d free.\n", index, centre.getCentreName(), newTrainingSize, centre.getCurrentCapacity(), centre.getFreeSpace()));
 
-            if (centre instanceof TechCentre) {
-                System.out.printf("\t\t%d. %S can take %d additional trainees this month. Now the centre's total capacity is %d, from which is %d free.\n", index, centreType, newTrainingSize, newCapacity, freeSpace);
-            } else {
-                System.out.printf("\t\t%d. %S can take %d additional trainees this month. Now the centre's total capacity is %d, from which is %d free.\n", index, centreType, newTrainingSize, newCapacity, freeSpace);
-            }
             index++;
         }
+
+        LogDriver.traceLog(sb.toString());
     }
 
 
@@ -304,7 +299,7 @@ public abstract class SimulatorManager {
             index++;
         }
 
-        System.out.printf("\tin total %d trainees graduated this month.", benchList.size()-oldBenchSize);
+        System.out.printf("\tin total %d trainees graduated this month.\n", benchList.size()-oldBenchSize);
     }
 
 
@@ -346,5 +341,6 @@ public abstract class SimulatorManager {
 
         clientList = newClientList;
     }
+
 
 }

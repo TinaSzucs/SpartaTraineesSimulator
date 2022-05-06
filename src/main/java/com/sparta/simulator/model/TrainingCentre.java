@@ -53,7 +53,7 @@ public class TrainingCentre {
         return successful;
     }
 
-    public void startNewTraining(){
+    public int startNewTraining(){
         Random rand = new Random();
         int max = MAX_CAPACITY - this.currentCapacity;
         int places;
@@ -63,6 +63,8 @@ public class TrainingCentre {
             places = rand.nextInt(0, max+1);
         }
         this.currentCapacity += places;
+
+        return places;
     }
 
     public int getFreeSpace() {
@@ -75,5 +77,12 @@ public class TrainingCentre {
 
     public void removeTrainees(ArrayList<Trainee> traineesToRemove) {
         this.onTheTraining.removeAll(traineesToRemove);
+    }
+
+    public String getCentreName(){
+        String centreName = String.valueOf(this.getClass());
+        centreName = centreName.substring(centreName.lastIndexOf('.')+1);
+
+        return centreName;
     }
 }

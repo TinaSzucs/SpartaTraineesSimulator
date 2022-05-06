@@ -1,5 +1,6 @@
 package com.sparta.simulator.start.display;
 
+import com.sparta.simulator.logging.LogDriver;
 import com.sparta.simulator.model.*;
 
 import java.util.ArrayList;
@@ -8,8 +9,11 @@ import java.util.Scanner;
 
 public abstract class Display {
     public static int scanSimulationLength() {
+        LogDriver.traceLog("Asking for input from user for the length of simulation.");
+
         boolean suitableInput = false;
         int simulationLength = -1;
+
         System.out.println("\nSetting the simulation length...");
 
         while ( !suitableInput ) {
@@ -20,13 +24,16 @@ public abstract class Display {
                     System.out.println("Please enter a positive number, which represents the months:");
 
                     simulationLength = scan.nextInt();
+                    LogDriver.debugLog(String.format("The users input is: %d.", simulationLength));
 
                 } while (simulationLength < 1);
 
                 suitableInput = true;
+                LogDriver.debugLog(String.format("The %d input have been accepted.", simulationLength));
 
             } catch (InputMismatchException e) {
                 System.out.print("The input is not a number!! ");
+                LogDriver.errorLog("User gave a Not A Number input @Display scanSimulationLength(). Restarting the scanning for new input.");
             }
         }
 
@@ -34,8 +41,10 @@ public abstract class Display {
     }
 
     public static int scanMinClientNumber() {
+        LogDriver.traceLog("Asking for input from user for the minimum limit for Clients to generate.");
         boolean suitableInput = false;
         int minRange = -1;
+
         System.out.println("\nSetting the client minimum range...");
 
         while ( !suitableInput ) {
@@ -46,23 +55,28 @@ public abstract class Display {
                     System.out.println("Please enter a non-negative number. This number represents the minimum amount of clients appearing monthly after the first year:");
 
                     minRange = scan.nextInt();
+                    LogDriver.debugLog(String.format("The users input is: %d.", minRange));
 
                 } while (minRange < 0);
 
                 suitableInput = true;
+                LogDriver.debugLog(String.format("The %d input have been accepted.", minRange));
 
             } catch (InputMismatchException e) {
                 System.out.print("The input is not a number!! ");
+                LogDriver.errorLog("User gave a Not A Number input @Display scanMinClientNumber(). Restarting the scanning for new input.");
             }
         }
 
         return minRange;
-
     }
 
     public static int scanMaxClientNumber(int minRange) {
+        LogDriver.traceLog(String.format("Asking for input from user for the maximum limit for Clients to generate. The provided minimum range is: %d.", minRange));
+
         boolean suitableInput = false;
         int maxRange = -1;
+
         System.out.println("\nSetting the client maximum range...");
 
         while ( !suitableInput ) {
@@ -70,28 +84,31 @@ public abstract class Display {
                 Scanner scan = new Scanner(System.in);
 
                 do {
-                    System.out.println("Please enter a positive number, which is greater than or equal to %d. This number represents maximum amount of clients appearing monthly after the first year:");
+                    System.out.printf("Please enter a positive number, which is greater than or equal to %d. This number represents maximum amount of clients appearing monthly after the first year:\n", minRange);
 
                     maxRange = scan.nextInt();
+                    LogDriver.debugLog(String.format("The users input is: %d.", maxRange));
 
                 } while (maxRange < minRange);
 
                 suitableInput = true;
+                LogDriver.debugLog(String.format("The %d input have been accepted.", maxRange));
 
             } catch (InputMismatchException e) {
                 System.out.print("The input is not a number!! ");
+                LogDriver.errorLog("User gave a Not A Number input @Display scanMaxClientNumber(). Restarting the scanning for new input.");
             }
         }
 
         return maxRange;
-
     }
 
     public static boolean scanChoiceOfSummary() {
+        LogDriver.traceLog("Asking for input from user for the output type.");
         boolean suitableInput = false;
         int summaryChoice = 0;
-        System.out.println("\nSetting the simulation output...");
 
+        System.out.println("\nSetting the simulation output...");
         System.out.println("\nPlease select the type of output option:\n\t1. Summary data at the end of the simulation\n\t2. Running output updated each month.");
 
         while ( !suitableInput ) {
@@ -101,16 +118,21 @@ public abstract class Display {
                 do {
                     System.out.println("Please enter the corresponding number");
                     summaryChoice = scan.nextInt();
+                    LogDriver.debugLog(String.format("The users input is: %d.", summaryChoice));
 
                 } while ( !(summaryChoice == 1 || summaryChoice == 2) );
 
                 suitableInput = true;
+                LogDriver.debugLog(String.format("The %d input have been accepted.", summaryChoice));
+                LogDriver.errorLog("User gave a Not A Number input @Display scanChoiceOfSummary(). Restarting the scanning for new input.");
 
             } catch (InputMismatchException e) {
                 System.out.print("The input is not a number!! ");
+
             }
         }
 
+        LogDriver.traceLog(String.format("The provided input is %d. Returning value: %s.", summaryChoice, (summaryChoice==2)));
         return (summaryChoice == 2);
     }
 
