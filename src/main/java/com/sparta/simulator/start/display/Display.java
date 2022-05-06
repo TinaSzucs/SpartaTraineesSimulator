@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
+import static com.sparta.simulator.logging.LogDriver.logger;
+
 public abstract class Display {
 
     public static void summaryDisplay(ArrayList<TrainingCentre> openCentres, ArrayList<TrainingCentre> closedCentres, ArrayList<Trainee> waitingList) {
@@ -65,6 +67,7 @@ public abstract class Display {
             } catch (InputMismatchException e) {
 //                e.printStackTrace();
                 System.out.print("The input is not a number!! ");
+                logger.warn("Invalid input");
             }
         }
 
@@ -93,6 +96,7 @@ public abstract class Display {
 //                e.printStackTrace();
                 // maybe log the user gave incorrect input, starting the loop again
                 System.out.print("The input is not a number!! ");
+                logger.warn("Invalid input");
             }
         }
 
