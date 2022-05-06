@@ -1,5 +1,7 @@
 package com.sparta.simulator.model;
 
+import com.sparta.simulator.logging.LogDriver;
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -13,9 +15,11 @@ public class TechCentre extends TrainingCentre {
 
     public TechCentre() {
         this.currentCapacity = 0;
-        this.onTheTraining = new ArrayList<Trainee>();
+        this.onTheTraining = new ArrayList<>();
         Random random = new Random();
         this.course = Course.values()[random.nextInt(0, Course.values().length)];
+
+        LogDriver.info(String.format("%S have been created, with %S specialisation.", this.getCentreName(), this.getCourse()));
     }
 
 
@@ -78,7 +82,7 @@ public class TechCentre extends TrainingCentre {
     }
 
     @Override
-    public void startNewTraining(){
+    public int startNewTraining(){
         Random rand = new Random();
         int max = this.MAX_CAPACITY - this.currentCapacity;
         int places;
@@ -89,6 +93,7 @@ public class TechCentre extends TrainingCentre {
         }
 
         this.currentCapacity += places;
+        return places;
     }
 
     public boolean isCourseMatch(Trainee trainee) {

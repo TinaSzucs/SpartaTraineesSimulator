@@ -1,5 +1,6 @@
 package com.sparta.simulator.controller;
 
+import com.sparta.simulator.logging.LogDriver;
 import com.sparta.simulator.model.*;
 import com.sparta.simulator.start.display.Display;
 
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 
 public abstract class SimulatorManager {
     public static void initialise() {
+        LogDriver.debug("SimulatorManager have been invoked.");
         // storing list of TrainingCentres, Trainees currently on training, and Trainees on waiting list
         ArrayList<TrainingCentre> openCentres = new ArrayList<>();
         ArrayList<TrainingCentre> closedCentres = new ArrayList<>();
@@ -18,20 +20,29 @@ public abstract class SimulatorManager {
         // we get the input from user to how long to run the simulation
         //      we assume the input is already checked, and will be a positive integer [ 1 - positive "infinite"]
         int runtime = Display.scanSimulationLength();
+        int minRange = 0;
+        int maxRange = 0;
 
         // get input from user to set the minimum and maximum limit of clients to be generated each month after 1 year
-        int minRange = Display.scanMinClientNumber();
-        int maxRange = Display.scanMaxClientNumber(minRange);
+        if (runtime >= 12) {
+            minRange = Display.scanMinClientNumber();
+            maxRange = Display.scanMaxClientNumber(minRange);
+        } else {
+            Display.noClientScan(runtime);
+        }
+
 
         boolean monthlySummary = Display.scanChoiceOfSummary();
 
 
         // iterate through each tick [=month]
+        LogDriver.info(String.format("SimulatorManager starts to iterate through the months up to the provided simulation length (%d).", runtime));
         for (int tick = 1; tick <= runtime; tick++) {
-            System.out.printf("\n%d. month:\n", tick);
+            LogDriver.info(String.format("Current month: %d", tick));
 
             // Every 2 months, Sparta Global opens training centres; they open instantly and can take trainees every month.
             if (tick % 2 == 1) {
+                LogDriver.debug(String.format("Within the every second month (%d %c 2 == %d)", tick, '%', tick%2));
                 openTrainingCentre(openCentres);
             }
 
@@ -69,13 +80,13 @@ public abstract class SimulatorManager {
 
 
             if (monthlySummary) {
-                Display.monthlySummary(tick, openCentres, closedCentres, waitingTrainees);
+                Display.monthlySummary(tick, openCentres, closedCentres, waitingTrainees, benchTrainees);
             }
         }
 
 
         if ( !monthlySummary) {
-            Display.summary(openCentres, closedCentres, waitingTrainees);
+            Display.summary(openCentres, closedCentres, waitingTrainees, benchTrainees);
         }
     }
 
@@ -93,41 +104,31 @@ public abstract class SimulatorManager {
             }
         }
 
+        LogDriver.debug(String.format("Currently we have %d Training Hub and %d Bootcamp.", hubCount, bootcampCount));
         TrainingCentre newCentre = TrainingCentreFactory.generateTrainingCentre(bootcampCount, hubCount);
-
-        String centreType = String.valueOf(newCentre.getClass());
-        centreType = centreType.substring(centreType.lastIndexOf('.')+1);
-        System.out.printf("\t%S have been created.\n", centreType);
 
         centreList.add(newCentre);
     }
 
 
     private static void monthlyTraineeIntake(ArrayList<TrainingCentre> centreList){
-        System.out.printf("\tcurrently we have %d open centres:\n", centreList.size());
+        LogDriver.info("Increase the currently open centres monthly Trainee intake.");
+        LogDriver.debug(String.format("Currently we have %d open centres:", centreList.size()));
+        StringBuilder sb = new StringBuilder();
 
         int index = 1;
         for(TrainingCentre centre: centreList) {
-            int prevCapacity = centre.getCurrentCapacity();
-            centre.startNewTraining();
-            int newCapacity = centre.getCurrentCapacity();
-            int newTrainingSize = newCapacity - prevCapacity;
-            int freeSpace = centre.getFreeSpace();
+            int newTrainingSize = centre.startNewTraining();
 
-            String centreType = String.valueOf(centre.getClass());
-            centreType = centreType.substring(centreType.lastIndexOf('.')+1);
-
-            if (centre instanceof TechCentre) {
-                System.out.printf("\t\t%d. %S can take %d additional trainees this month. Now the centre's total capacity is %d, from which is %d free.\n", index, centreType, newTrainingSize, newCapacity, freeSpace);
-            } else {
-                System.out.printf("\t\t%d. %S can take %d additional trainees this month. Now the centre's total capacity is %d, from which is %d free.\n", index, centreType, newTrainingSize, newCapacity, freeSpace);
-            }
-            index++;
+            sb.append(String.format("\t%2d. %11S can take %2d additional trainees this month. Now the centre's total capacity is %3d, from which is %3d free.\n", index++, centre.getCentreName(), newTrainingSize, centre.getCurrentCapacity(), centre.getFreeSpace()));
         }
+
+        LogDriver.debug(sb.toString());
     }
 
 
     private static ArrayList<Trainee> allocateTrainees(ArrayList<Trainee> traineesToAllocate, ArrayList<TrainingCentre> centreList) {
+        LogDriver.info("Allocating trainees...");
         // count how many total free spaces we have across the training centres
         int totalFreeSpace = 0;
         for (TrainingCentre centre: centreList) {
@@ -136,12 +137,15 @@ public abstract class SimulatorManager {
 
         // if all centres are full, we return the given list without wasting time on executing the rest of the code
         if (totalFreeSpace == 0) {
+            LogDriver.info("There are no free spaces left in the open training centres. Aborted allocateTrainees().");
             return traineesToAllocate;
         }
 
         // if we have more trainees than actual places, we just fill up all the spots without thinking
         // we iterate through the centres and add as many trainees as we can
         else if (traineesToAllocate.size() >= totalFreeSpace) {
+            LogDriver.debug(String.format("We have MORE free space (%3d) than trainees (%3d)", totalFreeSpace, traineesToAllocate.size() ));
+
             for (TrainingCentre centre : centreList) {
                 if (centre.getFreeSpace() > 0) {
                     ArrayList<Trainee> leftoverTrainees = new ArrayList<>();
@@ -156,6 +160,7 @@ public abstract class SimulatorManager {
         // if there are more spaces, than trainees to allocate
         // we iterate through the trainees, and insert them one by one to the next centre which still has space
         else {
+            LogDriver.debug(String.format("We have LESS free space (%3d) than trainees (%3d)", totalFreeSpace, traineesToAllocate.size() ));
             ArrayList<Trainee> couldNotAllocate = new ArrayList<>();
             int centreCount = centreList.size();
             int position = 0;
@@ -181,19 +186,19 @@ public abstract class SimulatorManager {
             traineesToAllocate = couldNotAllocate;
         }
 
-        //  if we have trainees which we couldn't allocate due to space limit, it will remain in the original arraylist
+        //  if we have trainees which we couldn't allocate due to space limit, it will remain in the originally provided arraylist
         return traineesToAllocate;
     }
 
 
     private static void allocateFromWaitingList(ArrayList<Trainee> waitingList, ArrayList<TrainingCentre> centreList){
-        System.out.printf("\tcurrently %d trainee(s) on the waiting list.\n", waitingList.size());
+        LogDriver.info("Allocating from training list, if there are any trainees waiting.");
+        LogDriver.debug(String.format("Currently %2d trainee(s) on the waiting list.", waitingList.size() ));
 
         // if there are elements in the waiting list, then we proceed to allocate them, else move on
         if (waitingList.size() > 0) {
-            System.out.println("\t. . . allocating trainees . . .");
             allocateTrainees(waitingList, centreList);
-            System.out.printf("\tafter allocating the waiting trainees among the free spaces, we have %d trainees on the waiting list.\n", waitingList.size());
+            LogDriver.debug(String.format("After allocating the waiting trainees among the free spaces, we have %d trainees on the waiting list.", waitingList.size()));
         }
 
     }
@@ -201,7 +206,7 @@ public abstract class SimulatorManager {
 
     private static void monthlyNewTrainees(ArrayList<Trainee> waitingList, ArrayList<TrainingCentre> centreList){
         ArrayList<Trainee> newTrainees = TraineeFactory.generateTrainees();
-        System.out.printf("\t%d new Trainees wanting to be trained this month.\n", newTrainees.size());
+        LogDriver.info(String.format("%d new Trainees wanting to be trained this month.", newTrainees.size() ));
 
         // if we have a Trainee in the waiting list, this means all the spots are full -> just add the new Trainees at the end of the list
         // we will try to allocate the new trainees ONLY, in case the TechCentre has spot for trainees with matching Course type
@@ -213,19 +218,22 @@ public abstract class SimulatorManager {
             allocateTrainees(newTrainees, centreList);
 
             waitingList.addAll(newTrainees);
-            System.out.printf("\tafter allocating the new trainees among the course specific free spaces, we have %d trainees on the waiting list.\n", waitingList.size());
+            LogDriver.debug("There are already some trainees on the waiting list. Running allocateTrainees() ONLY on the newly generated Trainees, then leftover added to the end of waiting list.");
         }
 
         // if the waiting list is empty, we try to allocate the new trainees, and the leftover will be added to the waiting list
         else {
             waitingList.addAll(allocateTrainees(newTrainees, centreList));
-            System.out.printf("\tafter allocating the new trainees among the free spaces, we have %d trainees on the waiting list.\n", waitingList.size());
+            LogDriver.debug("The waiting list is empty. Actually this else if statement has no reason to be there. Gotta delete it haha.");
         }
+
+        LogDriver.info(String.format("After allocating the new trainees among the course specific free spaces, we have %d trainees on the waiting list.", waitingList.size() ));
     }
 
 
-    private static void closeLowAttendanceCentres(ArrayList<TrainingCentre> open, ArrayList<TrainingCentre> closed, ArrayList<Trainee> waitingList){
-        System.out.println("\t. . . checking if a training centre needs to close . . .");
+    private static void closeLowAttendanceCentres(ArrayList<TrainingCentre> open, ArrayList<TrainingCentre> closed, ArrayList<Trainee> waitingList) {
+        LogDriver.info("Checking if a training centre has low attendance...");
+        StringBuilder sb = new StringBuilder();
         // If a centre has fewer than 25 trainees, it will close.
         // Bootcamp: can remain open for 3 months if there are fewer than 25 trainees in attendance. If a Bootcamp has 3 consecutive months of low attendance, it will close.
         ArrayList<TrainingCentre> newOpenList = new ArrayList<>();
@@ -241,10 +249,8 @@ public abstract class SimulatorManager {
                 traineesToRelocate.addAll(centre.getOnTheTraining());
                 closed.add(centre);
 
-                String centreType = String.valueOf(centre.getClass());
-                centreType = centreType.substring(centreType.lastIndexOf('.')+1);
-
-                System.out.printf("\t\t%d. %S training centre shuts down. It had only %d trainees.\n", index, centreType, centre.getOnTheTraining().size());
+                LogDriver.debug(String.format("%2d. %11S training centre shuts down. It had only %2d trainees.", index, centre.getCentreName(), centre.getOnTheTraining().size() ));
+                centre.getOnTheTraining().clear();
             }
 
             index++;
@@ -254,28 +260,32 @@ public abstract class SimulatorManager {
             open = newOpenList;
             moveTraineesFromClosedCentre(traineesToRelocate, open, waitingList);
         } else {
-            System.out.println("\tno centres was shut down.");
+            LogDriver.info("No training centre was closed.");
         }
 
     }
 
 
     private static void moveTraineesFromClosedCentre(ArrayList<Trainee> traineesToMove, ArrayList<TrainingCentre> centreList, ArrayList<Trainee> waitingList){
-        System.out.println("\t. . . trying to relocate trainees from the closed centres . . .");
-        int originalSize = traineesToMove.size();
+        LogDriver.info("Relocating trainees from closing training centres.");
+        StringBuilder sb = new StringBuilder(String.format("%3d trainees were on training. ", traineesToMove.size() ));
+
         allocateTrainees(traineesToMove, centreList);
-        int newSize = traineesToMove.size();
-        System.out.printf("\t\t%d trainees were on training, from which we could relocate %d. The remaining %d added to the beginning of waiting list.\n", originalSize, originalSize-newSize, newSize);
 
         for (int i=traineesToMove.size()-1 ; i >= 0 ; i--) {
             waitingList.add(0, traineesToMove.get(i));
         }
+
+        sb.append(String.format("After the relocation %3d trainees have been added at the beginning of the waiting list. ", traineesToMove.size() ));
+        sb.append(String.format("Currently the waiting list has %3d Trainees.", waitingList.size() ));
+        LogDriver.debug(sb.toString());
     }
 
 
     private static void graduateTrainees(ArrayList<TrainingCentre> centreList, ArrayList<Trainee> benchList) {
-        System.out.println("\t. . . graduating trainees . . . ");
-        int oldBenchSize = benchList.size();
+        LogDriver.info("Graduating trainees who are currently in training...");
+        StringBuilder sb = new StringBuilder();
+        int totalGraduateCount = 0;
         int index = 1;
 
         // we iterate through all the training centres
@@ -292,38 +302,43 @@ public abstract class SimulatorManager {
                 } else {
                     newTrainingList.add(trainee);
                 }
+
+                totalGraduateCount += graduateCount;
             }
 
             if (graduateCount > 0) {
-                String centreType = String.valueOf(centre.getClass());
-                centreType = centreType.substring(centreType.lastIndexOf('.')+1);
-                System.out.printf("\t\t%d. %S:\t%d trainees graduated.\n", index, centreType, graduateCount);
+                sb.append(String.format("%2d. %11S: %3d trainees graduated.\n", index, centre.getCentreName(), graduateCount ));
             }
 
             centre.setOnTheTraining(newTrainingList);
             index++;
         }
 
-        System.out.printf("\tin total %d trainees graduated this month.", benchList.size()-oldBenchSize);
+        sb.append(String.format("In total %3d trainees graduated this month.", totalGraduateCount ));
+        LogDriver.debug(sb.toString());
     }
 
 
     private static void newClients(ArrayList<Client> existingClientList, int minRange, int maxRange){
+        LogDriver.info("Generating new clients...");
         existingClientList.addAll(ClientFactory.generateClient(minRange, maxRange));
     }
 
 
     private static void monthlyClientIntake(ArrayList<Client> clients, ArrayList<Trainee> benchList){
         if (benchList.size() > 0) {
-            System.out.println("\t. . . allocating trainees from bench to clients . . .");
+            LogDriver.info("Alocating trainees from the bench to the clients...");
+            StringBuilder sb = new StringBuilder();
+
             int index = 1;
             for (Client client: clients) {
-                int beforeSize = benchList.size();
                 client.monthlyIntake();
                 client.addTraineesToClient(benchList);
-                System.out.printf("\t\t%d. client requirement is %d %S trainees. The client can take a maximum of %d trainees at the moment, from which %d spots still not filled.\n", index, client.getRequirementNumber(), client.getCourse(), client.getCurrentLimit(), client.getFreeSpace());
-                index++;
+
+                sb.append(String.format("%3d. client requirement is %3d %8S trainees. The client can take a maximum of %d trainees at the moment, from which %d spots still not filled.\n", index++, client.getRequirementNumber(), client.getCourse(), client.getCurrentLimit(), client.getFreeSpace() ));
             }
+
+            LogDriver.debug(sb.toString());
         }
     }
 
@@ -338,7 +353,7 @@ public abstract class SimulatorManager {
                 newClientList.add(client);
             } else {
                 unhappyClientList.add(client);
-                System.out.printf("\t%d. client left, as they are in short of %d trainees to meet their %d %S requirement.\n", index, client.getFreeSpace(), client.getRequirementNumber(), client.getCourse());
+                LogDriver.debug(String.format("%2d. client left, as they are in short of %d trainees to meet their %3d %8S requirement.\n", index, client.getFreeSpace(), client.getRequirementNumber(), client.getCourse()));
             }
 
             index++;

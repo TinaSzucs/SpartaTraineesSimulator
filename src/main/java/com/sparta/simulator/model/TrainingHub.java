@@ -1,5 +1,7 @@
 package com.sparta.simulator.model;
 
+import com.sparta.simulator.logging.LogDriver;
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -13,6 +15,8 @@ public class TrainingHub extends TrainingCentre {
     public TrainingHub() {
         this.currentCapacity = 0;
         this.onTheTraining = new ArrayList<>();
+
+        LogDriver.info(String.format("%S have been created.", this.getCentreName()));
     }
 
 
@@ -72,7 +76,7 @@ public class TrainingHub extends TrainingCentre {
     }
 
     @Override
-    public void startNewTraining(){
+    public int startNewTraining(){
         Random rand = new Random();
         int max = this.MAX_CAPACITY - this.currentCapacity;
         int places;
@@ -82,6 +86,7 @@ public class TrainingHub extends TrainingCentre {
             places = rand.nextInt(0, max+1);
         }
         this.currentCapacity += places;
+        return places;
     }
 
     @Override
