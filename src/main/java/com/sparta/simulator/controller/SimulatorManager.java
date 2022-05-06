@@ -11,20 +11,27 @@ public abstract class SimulatorManager {
         ArrayList<TrainingCentre> openCentres = new ArrayList<>();
         ArrayList<TrainingCentre> closedCentres = new ArrayList<>();
         ArrayList<Trainee> waitingTrainees = new ArrayList<>();
+        ArrayList<Trainee> benchTrainees = new ArrayList<>();
+        ArrayList<Client> clients = new ArrayList<>();
+        ArrayList<Client> unhappyClient = new ArrayList<>();
 
         // we get the input from user to how long to run the simulation
         //      we assume the input is already checked, and will be a positive integer [ 1 - positive "infinite"]
         int runtime = Display.scanSimulationLength();
 
-        int summaryChoice = Display.scanChoiceOfSummary();
+        // get input from user to set the minimum and maximum limit of clients to be generated each month after 1 year
+        int minRange = Display.scanMinClientNumber();
+        int maxRange = Display.scanMaxClientNumber(minRange);
+
+        boolean monthlySummary = Display.scanChoiceOfSummary();
 
 
         // iterate through each tick [=month]
-        for (int i=0 ; i <= runtime ; i++) {
-            System.out.printf("\n%d. month:\n", i);
+        for (int tick = 1; tick <= runtime; tick++) {
+            System.out.printf("\n%d. month:\n", tick);
 
             // Every 2 months, Sparta Global opens training centres; they open instantly and can take trainees every month.
-            if (i%2 == 0) {
+            if (tick % 2 == 1) {
                 openTrainingCentre(openCentres);
             }
 
@@ -37,25 +44,41 @@ public abstract class SimulatorManager {
             // Every month, a random number of trainees are generated, wanting to be trained (50 - 100).
             monthlyNewTrainees(waitingTrainees, openCentres);
 
-
-            // mukodik eddig
-
             // If a centre has fewer than 25 trainees, it will close.
             // The trainees will be randomly moved to another suitable centre.
             // Bootcamp: can remain open for 3 months if there are fewer than 25 trainees in attendance. If a Bootcamp has 3 consecutive months of low attendance, it will close
             closeLowAttendanceCentres(openCentres, closedCentres, waitingTrainees);
 
 
-            // call function from Display to print out that month's infos:
-//                number of open centres
-//                number of full centres
-//                number of trainees currently training
-//                number of trainees on the waiting list
+            // If a trainee has been in training for 3 months, they are moved to a bench state.
+            graduateTrainees(openCentres, benchTrainees);
+
+
+            // Clients will begin to be randomly created after 1 year of the simulation.
+            if (tick >= 12) {
+                newClients(clients, minRange, maxRange);
+
+                // A client will take a random number of trainees from the bench each month (1 - full requirement) until their requirement is met.
+                // ISSUE HERE
+                monthlyClientIntake(clients, benchTrainees);
+
+                // If a client does not collect enough trainees from the bench within a year, they will leave unhappy.
+                // If a client does collect enough trainees from the bench within a year, they will leave happy and return the next year with the same
+                assessClientHappiness(clients, unhappyClient);
+            }
+
+
+            if (monthlySummary) {
+                Display.monthlySummary(tick, openCentres, closedCentres, waitingTrainees);
+            }
         }
 
-        // call function from Display to print out the FINAL results [once the x month is over]
 
+        if ( !monthlySummary) {
+            Display.summary(openCentres, closedCentres, waitingTrainees);
+        }
     }
+
 
 
     private static void openTrainingCentre(ArrayList<TrainingCentre> centreList) {
@@ -94,7 +117,11 @@ public abstract class SimulatorManager {
             String centreType = String.valueOf(centre.getClass());
             centreType = centreType.substring(centreType.lastIndexOf('.')+1);
 
-            System.out.printf("\t\t%d. %S can take %d additional trainees this month. Now the centre's total capacity is %d, from which is %d free.\n", index, centreType, newTrainingSize, newCapacity, freeSpace);
+            if (centre instanceof TechCentre) {
+                System.out.printf("\t\t%d. %S can take %d additional trainees this month. Now the centre's total capacity is %d, from which is %d free.\n", index, centreType, newTrainingSize, newCapacity, freeSpace);
+            } else {
+                System.out.printf("\t\t%d. %S can take %d additional trainees this month. Now the centre's total capacity is %d, from which is %d free.\n", index, centreType, newTrainingSize, newCapacity, freeSpace);
+            }
             index++;
         }
     }
@@ -180,8 +207,8 @@ public abstract class SimulatorManager {
         // we will try to allocate the new trainees ONLY, in case the TechCentre has spot for trainees with matching Course type
         // [we assume all the waiting trainees are in different course]
 
-//         maybe add a function to check if theres a Tech centre in the list??
-//         if no, not to run the allocate trainees for no vain
+//         maybe add a function to check if there's a Tech centre in the list??
+//         if no, not to run allocate trainees
         if (waitingList.size() > 0) {
             allocateTrainees(newTrainees, centreList);
 
@@ -243,6 +270,81 @@ public abstract class SimulatorManager {
         for (int i=traineesToMove.size()-1 ; i >= 0 ; i--) {
             waitingList.add(0, traineesToMove.get(i));
         }
+    }
+
+
+    private static void graduateTrainees(ArrayList<TrainingCentre> centreList, ArrayList<Trainee> benchList) {
+        System.out.println("\t. . . graduating trainees . . . ");
+        int oldBenchSize = benchList.size();
+        int index = 1;
+
+        // we iterate through all the training centres
+        for (TrainingCentre centre: centreList) {
+            ArrayList<Trainee> newTrainingList = new ArrayList<>();
+            int graduateCount = 0;
+
+            // we iterate through the trainees of each individual training centre to increase their time spent learning
+            // if they reach the 3 months, they are graduated and instantly moved to the bench list
+            for (Trainee trainee: centre.getOnTheTraining()) {
+                if (trainee.addMonthTraining()) {
+                    benchList.add(trainee);
+                    graduateCount++;
+                } else {
+                    newTrainingList.add(trainee);
+                }
+            }
+
+            if (graduateCount > 0) {
+                String centreType = String.valueOf(centre.getClass());
+                centreType = centreType.substring(centreType.lastIndexOf('.')+1);
+                System.out.printf("\t\t%d. %S:\t%d trainees graduated.\n", index, centreType, graduateCount);
+            }
+
+            centre.setOnTheTraining(newTrainingList);
+            index++;
+        }
+
+        System.out.printf("\tin total %d trainees graduated this month.", benchList.size()-oldBenchSize);
+    }
+
+
+    private static void newClients(ArrayList<Client> existingClientList, int minRange, int maxRange){
+        existingClientList.addAll(ClientFactory.generateClient(minRange, maxRange));
+    }
+
+
+    private static void monthlyClientIntake(ArrayList<Client> clients, ArrayList<Trainee> benchList){
+        if (benchList.size() > 0) {
+            System.out.println("\t. . . allocating trainees from bench to clients . . .");
+            int index = 1;
+            for (Client client: clients) {
+                int beforeSize = benchList.size();
+                client.monthlyIntake();
+                client.addTraineesToClient(benchList);
+                System.out.printf("\t\t%d. client requirement is %d %S trainees. The client can take a maximum of %d trainees at the moment, from which %d spots still not filled.\n", index, client.getRequirementNumber(), client.getCourse(), client.getCurrentLimit(), client.getFreeSpace());
+                index++;
+            }
+        }
+    }
+
+
+    private static void assessClientHappiness(ArrayList<Client> clientList, ArrayList<Client> unhappyClientList){
+        ArrayList<Client> newClientList = new ArrayList<>();
+
+        int index = 1;
+
+        for (Client client: clientList) {
+            if (client.tickClient()) {
+                newClientList.add(client);
+            } else {
+                unhappyClientList.add(client);
+                System.out.printf("\t%d. client left, as they are in short of %d trainees to meet their %d %S requirement.\n", index, client.getFreeSpace(), client.getRequirementNumber(), client.getCourse());
+            }
+
+            index++;
+        }
+
+        clientList = newClientList;
     }
 
 }

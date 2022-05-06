@@ -13,43 +13,82 @@ public class Client {
     public Client(Course course, int requirementNumber) {
         this.requirementNumber = requirementNumber;
         this.course = course;
-        this.trainees = new ArrayList<>();
+        this.trainees = new ArrayList<>(requirementNumber);
         this.tickClient = 0;
         this.currentLimit = 0;
     }
 
     public Course getCourse() {return course;}
 
-    public int getTickClient() {return tickClient;}
+    public int getTickClient() {
+        return tickClient;
+    }
 
-    public ArrayList<Trainee> getTrainees() {return trainees;}
-    public void setTrainees(ArrayList<Trainee> trainees) {this.trainees = trainees;}
+    public void setTickClient(int tickClient) {
+        this.tickClient = tickClient;
+    }
 
-    public int getRequirementNumber() {return requirementNumber;}
-    public void setRequirementNumber(int requirementNumber) {this.requirementNumber = requirementNumber;}
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public int getRequirementNumber() {
+        return requirementNumber;
+    }
+
+    public void setRequirementNumber(int requirementNumber) {
+        this.requirementNumber = requirementNumber;
+    }
+
+    public ArrayList<Trainee> getTrainees() {
+        return trainees;
+    }
+
+    public void setTrainees(ArrayList<Trainee> trainees) {
+        this.trainees = trainees;
+    }
+
+    public int getCurrentLimit() {
+        return currentLimit;
+    }
+
+    public void setCurrentLimit(int currentLimit) {
+        this.currentLimit = currentLimit;
+    }
+
+    public int getFreeSpace() {
+        return (this.currentLimit - this.trainees.size());
+    }
 
 
-    public ArrayList<Trainee> addTraineesToClient(ArrayList<Trainee> traineesToAllocate) {
-        ArrayList<Trainee> notHiredTrainees = new ArrayList<>(traineesToAllocate);
-        int freeSpace = currentLimit - trainees.size();
-        for( int i = 0; i < traineesToAllocate.size(); i++) {
-            if (freeSpace > 0 && traineesToAllocate.get(i).getCourseType() == this.course) {
-                this.trainees.add(traineesToAllocate.get(i));
+    public void addTraineesToClient(ArrayList<Trainee> traineesToAllocate) {
+        int freeSpace = this.getFreeSpace();
+        int position = 0;
+
+        while (freeSpace > 0 && position < traineesToAllocate.size()) {
+            Trainee trainee = traineesToAllocate.get(position);
+
+            if (trainee.getCourseType() == this.getCourse()) {
+                this.getTrainees().add(trainee);
                 freeSpace--;
-            }
-             else {
-                 notHiredTrainees.add(traineesToAllocate.get(i));
+                traineesToAllocate.remove(position);
+            } else {
+                position++;
             }
         }
-        return notHiredTrainees;
+
     }
 
     public boolean tickClient() {
         this.tickClient++;
-        if (tickClient > 12) {
-            if(this.trainees.size() >= requirementNumber) {
-                trainees.clear();
-                tickClient = 0;
+
+        if (this.tickClient > 12) {
+
+            if(this.trainees.size() >= this.requirementNumber) {
+                this.trainees.clear();
+                this.tickClient = 0;
+                this.currentLimit = 0;
+
                 return true;
             } else {
                 return false;
@@ -59,10 +98,13 @@ public class Client {
     }
 
     public void monthlyIntake() {
-        Random rand = new Random();
-        int max = requirementNumber - trainees.size();
-        int intake = rand.nextInt(1, max+1);
-        currentLimit += intake;
+        if ( this.requirementNumber > this.currentLimit) {
+            int max = this.requirementNumber - this.currentLimit;
+
+            Random rand = new Random();
+            int intake = rand.nextInt(1, max+1);
+            this.currentLimit += intake;
+        }
     }
 
 }
