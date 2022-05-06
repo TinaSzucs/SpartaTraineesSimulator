@@ -6,12 +6,12 @@ import org.apache.logging.log4j.Logger;
 public class LogDriver {
     public static Logger logger = LogManager.getLogger("Logger");
 
-    public static void traceLog(String message) {
-        logger.trace(message);
+    public static void debug(String message) {
+        logger.debug(message);
     }
 
-    public static void debugLog(String message) {
-        logger.debug(message);
+    public static void info(String message) {
+        logger.info(message);
     }
 
     public static void errorLog(String message) {

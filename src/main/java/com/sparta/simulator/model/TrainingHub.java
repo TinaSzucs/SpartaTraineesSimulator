@@ -16,7 +16,7 @@ public class TrainingHub extends TrainingCentre {
         this.currentCapacity = 0;
         this.onTheTraining = new ArrayList<>();
 
-        LogDriver.debugLog(String.format("%S have been created.", this.getCentreName()));
+        LogDriver.info(String.format("%S have been created.", this.getCentreName()));
     }
 
 

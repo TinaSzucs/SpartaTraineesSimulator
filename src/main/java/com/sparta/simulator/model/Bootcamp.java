@@ -18,7 +18,7 @@ public class Bootcamp extends TrainingCentre {
         this.onTheTraining = new ArrayList<>();
         this.lowAttendanceTime = 0;
 
-        LogDriver.debugLog(String.format("%S have been created.", this.getCentreName()));
+        LogDriver.info(String.format("%S have been created.", this.getCentreName()));
     }
 
 

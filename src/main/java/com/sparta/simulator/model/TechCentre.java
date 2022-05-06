@@ -15,11 +15,11 @@ public class TechCentre extends TrainingCentre {
 
     public TechCentre() {
         this.currentCapacity = 0;
-        this.onTheTraining = new ArrayList<Trainee>();
+        this.onTheTraining = new ArrayList<>();
         Random random = new Random();
         this.course = Course.values()[random.nextInt(0, Course.values().length)];
 
-        LogDriver.debugLog(String.format("%S have been created, with %S specialisation.", this.getCentreName(), this.getCourse()));
+        LogDriver.info(String.format("%S have been created, with %S specialisation.", this.getCentreName(), this.getCourse()));
     }
 
 
